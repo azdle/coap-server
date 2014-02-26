@@ -5,7 +5,7 @@ int main () {
                                  SocketType.DATAGRAM, 
                                  SocketProtocol.UDP);
         var sa = new InetSocketAddress (new InetAddress.loopback (SocketFamily.IPV4),
-                                        3333);
+                                        5683);
         socket.bind (sa, true);
 
         var source = socket.create_source (IOCondition.IN);
