@@ -19,6 +19,8 @@ int main () {
                 print(message.to_string());
                 //print ("Got %ld bytes of data: \n", (long) read);
                 //hex_dump(buffer, read);
+                //print ("Recreated As: \n");
+                //hex_dump(message.create_datagram(), read);
             } catch (Error e) {
                 stderr.printf (e.message);
             }
