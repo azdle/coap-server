@@ -166,11 +166,11 @@ public class CoAP.Message : GLib.Object {
 
             if(short_option_delta > 12){
                 if(short_option_delta == 13){
-                    option_number += datagram[datagram_index] - 13;
+                    option_number += datagram[datagram_index] + 13;
                     datagram_index += 1;
                 }else if(short_option_delta == 14){
                     option_number += (datagram[datagram_index] << 8) +
-                        datagram[datagram_index + 1] - 269;
+                        datagram[datagram_index + 1] + 269;
                     datagram_index += 2;
                 }else if(short_option_delta == 15){
                     throw new CoAPError.MALFORMED_MESSAGE(
@@ -182,11 +182,11 @@ public class CoAP.Message : GLib.Object {
 
             if(short_option_length > 12){
                 if(short_option_length == 13){
-                    option_length = datagram[datagram_index] -13;
+                    option_length = datagram[datagram_index] + 13;
                     datagram_index += 1;
                 }else if(short_option_length == 14){
                     option_length = (datagram[datagram_index] << 8) |
-                        datagram[datagram_index + 1] - 269;
+                        datagram[datagram_index + 1] + 269;
                     datagram_index += 2;
                 }else if(short_option_length == 15){
                     throw new CoAPError.MALFORMED_MESSAGE(
