@@ -2,7 +2,8 @@
 public errordomain CoAPError {
     UNKNOWN_VERSION,
     UNKNOWN_CODE,
-    MALFORMED_MESSAGE
+    MALFORMED_MESSAGE,
+    OPTION_ORDER
 }
 
 public class CoAP.Message : GLib.Object {
@@ -216,8 +217,70 @@ public class CoAP.Message : GLib.Object {
 
     }
 
-    public uint8[] createDatagram(){
+    public uint8[] create_datagram() throws CoAPError {
         uint8[] datagram = new uint8[1501]; // 1500 + 1 for NULL Terminator
+        datagram[1500] = 0; // Just in Case, Should Not be Needed
+
+        size_t datagram_index = 0;
+
+        datagram[datagram_index++] = (this.version << 6) | (this._type << 4) | (this.token.length);
+        datagram[datagram_index++] = this.code;
+        datagram[datagram_index++] = (uint8) (message_id >> 8);
+        datagram[datagram_index++] = (uint8) (message_id & 0xff);
+
+        if(this.token.length != 0){
+            foreach(uint8 t in token){
+                datagram[datagram_index++] = t;
+            }
+        }
+
+        //TODO: Sort Options
+
+        uint16 last_option_number = 0;
+
+        foreach(Option o in options){
+            if(o.number < last_option_number){
+                throw new CoAPError.OPTION_ORDER("Options must be sorted by their option number.");
+            }
+
+            uint8* option_start_pointer = &datagram[datagram_index];
+
+            if(o.number - last_option_number < 13){
+                datagram[datagram_index++] = o.number << 4;
+            }else if(o.number -last_option_number < 269){
+                datagram[datagram_index++] = 13 << 4;
+                datagram[datagram_index++] = o.number - 13;
+            }else{
+                datagram[datagram_index++] = 14 << 4;
+                datagram[datagram_index++] = (o.number - 269) >> 8;
+                datagram[datagram_index++] = (o.number - 269) & 0xff;
+            }
+
+            if(o.value.length - last_option_number < 13){
+                *option_start_pointer |= o.value.length;
+            }else if(o.value.length -last_option_number < 269){
+                *option_start_pointer |= 13;
+                datagram[datagram_index++] = (uint8) o.value.length - 13;
+            }else{
+                *option_start_pointer |= 14;
+                datagram[datagram_index++] = (uint8) (o.value.length - 269) >> 8;
+                datagram[datagram_index++] = (uint8) (o.value.length - 269) & 0xff;
+            }
+
+            foreach(uint8 b in o.value){
+                datagram[datagram_index++] = b;
+            }
+        }
+
+        foreach(uint8 b in payload){
+            if(datagram_index >= 1500){
+                throw new CoAPError.MALFORMED_MESSAGE("Total message length is longer than 1500 bytes.");
+            }
+
+            datagram[datagram_index++] = b;
+        }
+
+        datagram.length = (int) datagram_index;
 
         return datagram;
     }
